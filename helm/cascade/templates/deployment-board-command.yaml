@@ -31,7 +31,7 @@ spec:
             - name: MONGODB_URI
               value: "mongodb://{{ .Release.Name }}-mongodb-0.{{ .Release.Name }}-mongodb-headless:27017,{{ .Release.Name }}-mongodb-1.{{ .Release.Name }}-mongodb-headless:27017,{{ .Release.Name }}-mongodb-2.{{ .Release.Name }}-mongodb-headless:27017/cascade-board?replicaSet=rs0"
             - name: KAFKA_BROKERS
-              value: "cascade-kafka-kafka-bootstrap:9092"
+              value: "cascade-kafka-kafka-bootstrap.default.svc.cluster.local:9092"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
