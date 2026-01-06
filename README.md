@@ -1,8 +1,6 @@
 <div align="center">
 
-<img src="cascade-logo.png" alt="Cascade Logo" width="175" />
-
-# Cascade
+<img src="cascade-logo.png" alt="Cascade Logo" width="275" />
 
 Event-Driven Team Task Board on GKE
 
