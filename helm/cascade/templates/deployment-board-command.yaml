@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cascade.fullname" . }}-board-command
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: board-command
+spec:
+  replicas: {{ .Values.boardCommand.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "cascade.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: board-command
+  template:
+    metadata:
+      labels:
+        {{- include "cascade.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: board-command
+    spec:
+      containers:
+        - name: board-command
+          image: "{{ .Values.app.image.repository }}/board-command-service:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3002
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3002"
+            - name: MONGODB_URI
+              value: "mongodb://{{ .Release.Name }}-mongodb:27017/cascade-board"
+            - name: KAFKA_BROKERS
+              value: "cascade-kafka-kafka-bootstrap:9092"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cascade.fullname" . }}-secrets
+                  key: JWT_SECRET
+          resources:
+            {{- toYaml .Values.boardCommand.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cascade.fullname" . }}-board-command
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: board-command
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3002
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "cascade.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: board-command

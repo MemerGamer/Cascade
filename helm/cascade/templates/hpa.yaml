@@ -1,0 +1,95 @@
+{{- if .Values.auth.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "cascade.fullname" . }}-auth
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: auth
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "cascade.fullname" . }}-auth
+  minReplicas: {{ .Values.auth.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.auth.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.auth.autoscaling.targetCPUUtilizationPercentage | default 80 }}
+---
+{{- end }}
+{{- if .Values.boardCommand.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "cascade.fullname" . }}-board-command
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: board-command
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "cascade.fullname" . }}-board-command
+  minReplicas: {{ .Values.boardCommand.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.boardCommand.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+{{- end }}
+{{- if .Values.boardQuery.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "cascade.fullname" . }}-board-query
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: board-query
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "cascade.fullname" . }}-board-query
+  minReplicas: {{ .Values.boardQuery.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.boardQuery.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+---
+{{- end }}
+{{- if .Values.frontend.autoscaling.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "cascade.fullname" . }}-frontend
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: frontend
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "cascade.fullname" . }}-frontend
+  minReplicas: {{ .Values.frontend.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.frontend.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+{{- end }}
