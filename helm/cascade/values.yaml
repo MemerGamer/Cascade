@@ -71,10 +71,6 @@ frontend:
 # MongoDB (Bitnami)
 mongodb:
   enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/mongodb
-    tag: 7.0.4
   auth:
     enabled: false # For demo simplicity, enable in prod
   architecture: replicaset
@@ -86,10 +82,6 @@ mongodb:
 # Redis (Bitnami)
 redis:
   enabled: true
-  image:
-    registry: docker.io
-    repository: bitnami/redis
-    tag: 7.2.3
   architecture: standalone # Save resources for demo
   auth:
     enabled: false

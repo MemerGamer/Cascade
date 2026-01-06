@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="cascade-logo.png" alt="Cascade Logo" width="100" />
+<img src="cascade-logo.png" alt="Cascade Logo" width="175" />
 
 # Cascade
 
@@ -39,7 +39,7 @@ To run the project locally using Docker Compose:
    ```bash
    docker-compose up --build
    ```
-   More details in [docker compose](./DOCKER-COMPOSE.md)
+   More details in the local [docker compose documentation](./DOCKER-COMPOSE.md).
 
 ### GKE Deployment
 
