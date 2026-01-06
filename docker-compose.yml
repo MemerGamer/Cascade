@@ -1,0 +1,245 @@
+version: '3.9'
+
+services:
+  # Kafka with KRaft (no Zookeeper)
+  kafka:
+    image: confluentinc/cp-kafka:7.7.7
+    container_name: cascade-kafka
+    ports:
+      - "9094:9094"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT'
+      KAFKA_ADVERTISED_LISTENERS: 'PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094'
+      KAFKA_PROCESS_ROLES: 'broker,controller'
+      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@localhost:9093'
+      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,EXTERNAL://0.0.0.0:9094'
+      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      CLUSTER_ID: '4L6g3nShT-eMCtK--X86sw'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB Replica Set
+  mongo1:
+    image: mongo:7
+    container_name: cascade-mongo1
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo1_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+
+  mongo2:
+    image: mongo:7
+    container_name: cascade-mongo2
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo2_data:/data/db
+
+  mongo3:
+    image: mongo:7
+    container_name: cascade-mongo3
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+    ports:
+      - "27019:27017"
+    volumes:
+      - mongo3_data:/data/db
+
+  # MongoDB initialization
+  mongo-init:
+    image: mongo:7
+    container_name: cascade-mongo-init
+    depends_on:
+      mongo1:
+        condition: service_healthy
+    command: >
+      mongosh --host mongo1:27017 --eval '
+        try {
+          rs.initiate({
+            _id: "rs0",
+            members: [
+              { _id: 0, host: "mongo1:27017" },
+              { _id: 1, host: "mongo2:27017" },
+              { _id: 2, host: "mongo3:27017" }
+            ]
+          });
+        } catch (e) {
+          if (e.codeName === "AlreadyInitialized") {
+            print("Replica set already initialized");
+          } else {
+            throw e;
+          }
+        }
+      '
+    restart: "no"
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: cascade-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Auth Service
+  auth-service:
+    build:
+      context: .
+      dockerfile: backend/services/auth/Dockerfile
+    container_name: cascade-auth
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      LOG_LEVEL: "info"
+      MONGODB_URI: "mongodb://mongo1:27017,mongo2:27017,mongo3:27017/auth-db?replicaSet=rs0"
+      KAFKA_BROKERS: "kafka:9092"
+      AUTH_SECRET: "dev-secret-please-change-in-production"
+      BASE_URL: "http://localhost:3001"
+      NODE_ENV: "development"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo1:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Board Command Service
+  board-command-service:
+    build:
+      context: .
+      dockerfile: backend/services/board-command/Dockerfile
+    container_name: cascade-board-command
+    ports:
+      - "3002:3002"
+    environment:
+      PORT: "3002"
+      LOG_LEVEL: "info"
+      MONGODB_URI: "mongodb://mongo1:27017,mongo2:27017,mongo3:27017/board-db?replicaSet=rs0"
+      KAFKA_BROKERS: "kafka:9092"
+      NODE_ENV: "development"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo1:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Board Query Service
+  board-query-service:
+    build:
+      context: .
+      dockerfile: backend/services/board-query/Dockerfile
+    container_name: cascade-board-query
+    ports:
+      - "3003:3003"
+    environment:
+      PORT: "3003"
+      LOG_LEVEL: "info"
+      MONGODB_URI: "mongodb://mongo1:27017,mongo2:27017,mongo3:27017/board-db?replicaSet=rs0"
+      REDIS_URL: "redis://redis:6379"
+      KAFKA_BROKERS: "kafka:9092"
+      NODE_ENV: "development"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo1:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Activity Service
+  activity-service:
+    build:
+      context: .
+      dockerfile: backend/services/activity/Dockerfile
+    container_name: cascade-activity
+    ports:
+      - "3004:3004"
+    environment:
+      PORT: "3004"
+      LOG_LEVEL: "info"
+      KAFKA_BROKERS: "kafka:9092"
+      NODE_ENV: "development"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Audit Service
+  audit-service:
+    build:
+      context: .
+      dockerfile: backend/services/audit/Dockerfile
+    container_name: cascade-audit
+    ports:
+      - "3005:3005"
+    environment:
+      PORT: "3005"
+      LOG_LEVEL: "info"
+      MONGODB_URI: "mongodb://mongo1:27017,mongo2:27017,mongo3:27017/audit-db?replicaSet=rs0"
+      KAFKA_BROKERS: "kafka:9092"
+      NODE_ENV: "development"
+    depends_on:
+      kafka:
+        condition: service_healthy
+      mongo1:
+        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cascade-frontend
+    ports:
+      - "5173:3000"
+    depends_on:
+      - auth-service
+      - board-command-service
+      - board-query-service
+    restart: unless-stopped
+
+volumes:
+  kafka_data:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  redis_data:
+
+networks:
+  default:
+    name: cascade-network

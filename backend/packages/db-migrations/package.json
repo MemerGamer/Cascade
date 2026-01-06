@@ -1,0 +1,15 @@
+{
+    "name": "@cascade/db-migrations",
+    "version": "1.0.0",
+    "main": "src/index.ts",
+    "dependencies": {
+        "mongoose": "^9.1.2",
+        "dotenv": "^16.4.5"
+    },
+    "devDependencies": {
+        "@types/bun": "latest"
+    },
+    "scripts": {
+        "migrate": "bun run src/migrate.ts"
+    }
+}

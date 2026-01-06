@@ -1,118 +1,607 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { authClient } from "../auth/authClient";
+import { useState, useEffect } from "react";
 import {
-  Zap,
-  Server,
-  Route as RouteIcon,
-  Shield,
-  Waves,
-  Sparkles,
-} from 'lucide-react'
+  getBoards,
+  getPublicBoards,
+  createBoard,
+  deleteBoard,
+  joinBoard,
+  type Board,
+} from "../lib/api";
+import {
+  Plus,
+  Layout,
+  Loader2,
+  Trash2,
+  Globe,
+  Lock,
+  Users,
+  Key,
+} from "lucide-react";
 
-export const Route = createFileRoute('/')({ component: App })
+export const Route = createFileRoute("/")({ component: App });
 
 function App() {
-  const features = [
-    {
-      icon: <Zap className="w-12 h-12 text-cyan-400" />,
-      title: 'Powerful Server Functions',
-      description:
-        'Write server-side code that seamlessly integrates with your client components. Type-safe, secure, and simple.',
-    },
-    {
-      icon: <Server className="w-12 h-12 text-cyan-400" />,
-      title: 'Flexible Server Side Rendering',
-      description:
-        'Full-document SSR, streaming, and progressive enhancement out of the box. Control exactly what renders where.',
-    },
-    {
-      icon: <RouteIcon className="w-12 h-12 text-cyan-400" />,
-      title: 'API Routes',
-      description:
-        'Build type-safe API endpoints alongside your application. No separate backend needed.',
-    },
-    {
-      icon: <Shield className="w-12 h-12 text-cyan-400" />,
-      title: 'Strongly Typed Everything',
-      description:
-        'End-to-end type safety from server to client. Catch errors before they reach production.',
-    },
-    {
-      icon: <Waves className="w-12 h-12 text-cyan-400" />,
-      title: 'Full Streaming Support',
-      description:
-        'Stream data from server to client progressively. Perfect for AI applications and real-time updates.',
-    },
-    {
-      icon: <Sparkles className="w-12 h-12 text-cyan-400" />,
-      title: 'Next Generation Ready',
-      description:
-        'Built from the ground up for modern web applications. Deploy anywhere JavaScript runs.',
-    },
-  ]
+  const { data: session, isPending } = authClient.useSession();
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [publicBoards, setPublicBoards] = useState<Board[]>([]);
+  const [isCreating, setIsCreating] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [joinBoardId, setJoinBoardId] = useState("");
+  const [joinPin, setJoinPin] = useState("");
+  const [showJoinPrivateModal, setShowJoinPrivateModal] = useState(false);
+  const [privateJoinBoardId, setPrivateJoinBoardId] = useState("");
+  const [privateJoinPin, setPrivateJoinPin] = useState("");
+  const [activeTab, setActiveTab] = useState<"my" | "public">("my");
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      loadBoards();
+      loadPublicBoards();
+    }
+  }, [session]);
+
+  async function loadBoards() {
+    if (!session?.user?.id) return;
+    try {
+      const res = await getBoards(session.user.id);
+      setBoards(res.boards);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function loadPublicBoards() {
+    try {
+      const res = await getPublicBoards();
+      setPublicBoards(res.boards);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function handleDeleteBoard(e: React.MouseEvent, boardId: string) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this board?")) return;
+    try {
+      await deleteBoard(boardId);
+      setBoards(boards.filter((b) => b._id !== boardId));
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function handleJoinBoard(boardId: string, isPrivate: boolean) {
+    if (!session?.user?.id) return;
+
+    if (isPrivate) {
+      setJoinBoardId(boardId);
+      setShowJoinModal(true);
+      return;
+    }
+
+    try {
+      await joinBoard(boardId, session.user.id);
+      loadBoards();
+      loadPublicBoards();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  async function handleJoinWithPin() {
+    if (!session?.user?.id || !joinBoardId) return;
+    try {
+      await joinBoard(joinBoardId, session.user.id, joinPin);
+      setShowJoinModal(false);
+      setJoinPin("");
+      setJoinBoardId("");
+      loadBoards();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  async function handleJoinPrivateBoard() {
+    if (
+      !session?.user?.id ||
+      !privateJoinBoardId.trim() ||
+      !privateJoinPin.trim()
+    )
+      return;
+    try {
+      await joinBoard(privateJoinBoardId, session.user.id, privateJoinPin);
+      setShowJoinPrivateModal(false);
+      setPrivateJoinBoardId("");
+      setPrivateJoinPin("");
+      loadBoards();
+      alert("Successfully joined board!");
+    } catch (err: any) {
+      alert(err.message);
+    }
+  }
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+        <Loader2 className="animate-spin w-8 h-8 text-cyan-500" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LandingPage />;
+  }
+
+  const myBoards = boards.filter((b) =>
+    b.members?.some((m) => m.userId === session.user.id)
+  );
+  const joinablePublicBoards = publicBoards.filter(
+    (b) => !b.members?.some((m) => m.userId === session.user.id)
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900">
-      <section className="relative py-20 px-6 text-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
-        <div className="relative max-w-5xl mx-auto">
-          <div className="flex items-center justify-center gap-6 mb-6">
-            <img
-              src="/tanstack-circle-logo.png"
-              alt="TanStack Logo"
-              className="w-24 h-24 md:w-32 md:h-32"
-            />
-            <h1 className="text-6xl md:text-7xl font-black text-white [letter-spacing:-0.08em]">
-              <span className="text-gray-300">TANSTACK</span>{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent">
-                START
-              </span>
+    <div className="min-h-screen bg-slate-950 text-white p-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
+              Dashboard
             </h1>
+            <p className="text-slate-400">Manage your projects and tasks</p>
           </div>
-          <p className="text-2xl md:text-3xl text-gray-300 mb-4 font-light">
-            The framework for next generation AI applications
-          </p>
-          <p className="text-lg text-gray-400 max-w-3xl mx-auto mb-8">
-            Full-stack framework powered by TanStack Router for React and Solid.
-            Build modern applications with server functions, streaming, and type
-            safety.
-          </p>
-          <div className="flex flex-col items-center gap-4">
-            <a
-              href="https://tanstack.com/start"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition-colors shadow-lg shadow-cyan-500/50"
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShowJoinPrivateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg font-medium transition-colors"
             >
-              Documentation
-            </a>
-            <p className="text-gray-400 text-sm mt-2">
-              Begin your TanStack Start journey by editing{' '}
-              <code className="px-2 py-1 bg-slate-700 rounded text-cyan-400">
-                /src/routes/index.tsx
-              </code>
-            </p>
+              <Key className="w-4 h-4" /> Join Private Board
+            </button>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium transition-colors"
+            >
+              <Plus className="w-5 h-5" /> New Board
+            </button>
           </div>
         </div>
-      </section>
 
-      <section className="py-16 px-6 max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className="bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10"
-            >
-              <div className="mb-4">{feature.icon}</div>
-              <h3 className="text-xl font-semibold text-white mb-3">
-                {feature.title}
-              </h3>
-              <p className="text-gray-400 leading-relaxed">
-                {feature.description}
-              </p>
-            </div>
-          ))}
+        {/* Tabs */}
+        <div className="flex gap-4 mb-8 border-b border-slate-800">
+          <button
+            onClick={() => setActiveTab("my")}
+            className={`pb-3 px-1 font-medium transition-colors ${
+              activeTab === "my"
+                ? "text-cyan-400 border-b-2 border-cyan-400"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            My Boards ({myBoards.length})
+          </button>
+          <button
+            onClick={() => setActiveTab("public")}
+            className={`pb-3 px-1 font-medium transition-colors ${
+              activeTab === "public"
+                ? "text-cyan-400 border-b-2 border-cyan-400"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <Globe className="w-4 h-4 inline mr-2" />
+            Public Boards ({joinablePublicBoards.length})
+          </button>
         </div>
-      </section>
+
+        {activeTab === "my" ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {myBoards.map((board) => (
+              <Link
+                to="/boards/$boardId"
+                params={{ boardId: board._id }}
+                key={board._id}
+                className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 hover:shadow-xl hover:shadow-cyan-900/10 transition-all group block relative"
+              >
+                <button
+                  onClick={(e) => handleDeleteBoard(e, board._id)}
+                  className="absolute top-4 right-4 p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-2 bg-slate-800 rounded-lg group-hover:bg-cyan-500/10 group-hover:text-cyan-400 transition-colors">
+                    <Layout className="w-5 h-5" />
+                  </div>
+                  {board.visibility === "public" ? (
+                    <Globe className="w-4 h-4 text-green-400" />
+                  ) : (
+                    <Lock className="w-4 h-4 text-slate-500" />
+                  )}
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-slate-100 group-hover:text-white">
+                  {board.name}
+                </h3>
+                <p className="text-sm text-slate-500 mb-2">
+                  {board.members?.length || 0} member
+                  {board.members?.length !== 1 ? "s" : ""}
+                </p>
+                <div className="mt-4 pt-4 border-t border-slate-800 text-xs text-slate-400">
+                  Created {new Date(board.createdAt).toLocaleDateString()}
+                </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {joinablePublicBoards.map((board) => (
+              <div
+                key={board._id}
+                className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-2 bg-slate-800 rounded-lg">
+                    <Layout className="w-5 h-5" />
+                  </div>
+                  <Globe className="w-4 h-4 text-green-400" />
+                </div>
+                <h3 className="text-xl font-bold mb-2 text-slate-100">
+                  {board.name}
+                </h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  <Users className="w-4 h-4 inline mr-1" />
+                  {board.members?.length || 0} member
+                  {board.members?.length !== 1 ? "s" : ""}
+                </p>
+                <button
+                  onClick={() => handleJoinBoard(board._id, false)}
+                  className="w-full py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium transition-colors"
+                >
+                  Join Board
+                </button>
+              </div>
+            ))}
+            {joinablePublicBoards.length === 0 && (
+              <p className="text-slate-500 col-span-full text-center py-12">
+                No public boards available to join
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Create Board Modal */}
+      {showCreateModal && session && (
+        <CreateBoardModal
+          userId={session.user.id}
+          onClose={() => setShowCreateModal(false)}
+          onCreated={() => {
+            setShowCreateModal(false);
+            setTimeout(loadBoards, 500);
+          }}
+        />
+      )}
+
+      {/* Join with PIN Modal (for pub boards clicked from list) */}
+      {showJoinModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 w-full max-w-sm">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Key className="w-5 h-5" /> Enter PIN
+            </h2>
+            <input
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-cyan-500"
+              value={joinPin}
+              onChange={(e) =>
+                setJoinPin(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              placeholder="000000"
+              maxLength={6}
+            />
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setShowJoinModal(false);
+                  setJoinPin("");
+                }}
+                className="flex-1 py-2 text-slate-400 hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJoinWithPin}
+                disabled={joinPin.length !== 6}
+                className="flex-1 py-2 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium disabled:opacity-50"
+              >
+                Join
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Join Private Board Modal */}
+      {showJoinPrivateModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+              <Key className="w-5 h-5" /> Join Private Board
+            </h2>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs text-slate-400 uppercase tracking-wider mb-1 block">
+                  Board ID
+                </label>
+                <input
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white font-mono text-sm focus:outline-none focus:border-cyan-500"
+                  value={privateJoinBoardId}
+                  onChange={(e) => setPrivateJoinBoardId(e.target.value)}
+                  placeholder="67890abcdef12345"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs text-slate-400 uppercase tracking-wider mb-1 block">
+                  6-Digit PIN
+                </label>
+                <input
+                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-center text-2xl tracking-widest font-mono focus:outline-none focus:border-cyan-500"
+                  value={privateJoinPin}
+                  onChange={(e) =>
+                    setPrivateJoinPin(
+                      e.target.value.replace(/\D/g, "").slice(0, 6)
+                    )
+                  }
+                  placeholder="000000"
+                  maxLength={6}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setShowJoinPrivateModal(false);
+                  setPrivateJoinBoardId("");
+                  setPrivateJoinPin("");
+                }}
+                className="flex-1 py-3 text-slate-400 hover:text-white transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleJoinPrivateBoard}
+                disabled={
+                  !privateJoinBoardId.trim() || privateJoinPin.length !== 6
+                }
+                className="flex-1 py-3 bg-cyan-500 hover:bg-cyan-600 rounded-lg font-medium disabled:opacity-50 transition-colors"
+              >
+                Join Board
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
+  );
+}
+
+function CreateBoardModal({
+  userId,
+  onClose,
+  onCreated,
+}: {
+  userId: string;
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [name, setName] = useState("");
+  const [visibility, setVisibility] = useState<"public" | "private">("private");
+  const [creating, setCreating] = useState(false);
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) return;
+
+    setCreating(true);
+    try {
+      await createBoard({ name, ownerId: userId, visibility });
+      onCreated();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-xl border border-slate-700 p-6 w-full max-w-md">
+        <h2 className="text-xl font-semibold text-white mb-6">
+          Create New Board
+        </h2>
+
+        <form onSubmit={handleCreate} className="space-y-4">
+          <div>
+            <label className="text-xs text-slate-400 uppercase tracking-wider mb-1 block">
+              Board Name
+            </label>
+            <input
+              className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white focus:outline-none focus:border-cyan-500"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="My Awesome Project"
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="text-xs text-slate-400 uppercase tracking-wider mb-2 block">
+              Visibility
+            </label>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setVisibility("private")}
+                className={`flex-1 p-4 rounded-lg border transition-all ${
+                  visibility === "private"
+                    ? "border-cyan-500 bg-cyan-500/10"
+                    : "border-slate-700 hover:border-slate-600"
+                }`}
+              >
+                <Lock
+                  className={`w-5 h-5 mb-2 ${visibility === "private" ? "text-cyan-400" : "text-slate-400"}`}
+                />
+                <div className="font-medium text-white">Private</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  Join with 6-digit PIN
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setVisibility("public")}
+                className={`flex-1 p-4 rounded-lg border transition-all ${
+                  visibility === "public"
+                    ? "border-cyan-500 bg-cyan-500/10"
+                    : "border-slate-700 hover:border-slate-600"
+                }`}
+              >
+                <Globe
+                  className={`w-5 h-5 mb-2 ${visibility === "public" ? "text-cyan-400" : "text-slate-400"}`}
+                />
+                <div className="font-medium text-white">Public</div>
+                <div className="text-xs text-slate-500 mt-1">
+                  Anyone can join
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-3 text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creating || !name.trim()}
+              className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 rounded-lg font-medium disabled:opacity-50 transition-colors"
+            >
+              {creating ? (
+                <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+              ) : (
+                "Create Board"
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function LandingPage() {
+  return (
+    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
+            Cascade
+          </h1>
+          <p className="text-slate-400">Microservices-based Task Management</p>
+        </div>
+        <LoginForm />
+      </div>
+    </div>
+  );
+}
+
+function LoginForm() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      if (isSignUp) {
+        await authClient.signUp.email({
+          email,
+          password,
+          name: email.split("@")[0],
+        });
+      } else {
+        await authClient.signIn.email({
+          email,
+          password,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+          Email
+        </label>
+        <input
+          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="name@example.com"
+          type="email"
+          required
+        />
+      </div>
+      <div className="space-y-1">
+        <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">
+          Password
+        </label>
+        <input
+          className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white placeholder-slate-600 focus:outline-none focus:border-cyan-500 transition-colors"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="••••••••"
+          type="password"
+          required
+        />
+      </div>
+
+      <button
+        className="mt-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white p-3 rounded-lg font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
+        disabled={loading}
+      >
+        {loading ? (
+          <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+        ) : isSignUp ? (
+          "Create Account"
+        ) : (
+          "Sign In"
+        )}
+      </button>
+
+      <button
+        type="button"
+        className="text-slate-400 hover:text-cyan-400 text-sm transition-colors"
+        onClick={() => setIsSignUp(!isSignUp)}
+      >
+        {isSignUp
+          ? "Already have an account? Sign In"
+          : "Don't have an account? Sign Up"}
+      </button>
+    </form>
+  );
 }
