@@ -252,7 +252,7 @@ app.delete("/api/boards/:id/columns/:colId", async (c) => {
       );
     }
 
-    board.columns = board.columns.filter((col: any) => col.id !== colId);
+    board.columns.pull({ id: colId });
 
     // Move tasks from deleted column to first column
     const firstColumnId = board.columns[0].id;
@@ -313,7 +313,7 @@ app.delete("/api/boards/:id/tags/:tagId", async (c) => {
       return c.json({ success: false, error: "Board not found" }, 404);
     }
 
-    board.tags = board.tags.filter((tag: any) => tag.id !== tagId);
+    board.tags.pull({ id: tagId });
 
     // Remove tag from all tasks
     await Task.updateMany({ boardId }, { $pull: { tags: tagId } });

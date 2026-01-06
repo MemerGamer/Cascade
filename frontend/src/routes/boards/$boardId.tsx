@@ -29,18 +29,9 @@ import {
   addTag,
   type Board,
   type Task,
-  type Column,
   type Tag,
 } from "../../lib/api";
-import {
-  Loader2,
-  Plus,
-  ArrowLeft,
-  MoreVertical,
-  Trash2,
-  Edit,
-  Tag as TagIcon,
-} from "lucide-react";
+import { Loader2, Plus, ArrowLeft, Trash2, Tag as TagIcon } from "lucide-react";
 import TaskModal from "../../components/TaskModal";
 import { authClient } from "../../auth/authClient";
 

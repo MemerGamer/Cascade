@@ -98,7 +98,7 @@ fi
 echo "------------------------------------------------"
 echo "🚀 Deploying Cascade Helm Chart..."
 # Update dependencies
-helm dependency build helm/cascade
+helm dependency update helm/cascade
 
 # Install/Upgrade
 helm upgrade --install cascade helm/cascade \

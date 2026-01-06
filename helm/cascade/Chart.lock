@@ -1,15 +1,15 @@
 dependencies:
 - name: strimzi-kafka-operator
   repository: https://strimzi.io/charts/
-  version: 0.38.0
+  version: 0.49.1
 - name: kafka-ui
   repository: https://provectus.github.io/kafka-ui-charts
   version: 0.7.5
 - name: mongodb
   repository: https://charts.bitnami.com/bitnami
-  version: 14.2.0
+  version: 18.1.20
 - name: redis
   repository: https://charts.bitnami.com/bitnami
-  version: 18.1.0
-digest: sha256:55486cd75263b91c9d0dc4a144098b4f5b4f9ff921f99173154d687c96ced608
-generated: "2026-01-06T17:07:58.7079462+02:00"
+  version: 24.1.0
+digest: sha256:c555905ec3da28b0ff779131b7408bf65a1d338e0ad6b0600d9bd65ced377582
+generated: "2026-01-06T18:12:20.864897991+02:00"

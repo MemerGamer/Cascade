@@ -26,7 +26,6 @@ function App() {
   const { data: session, isPending } = authClient.useSession();
   const [boards, setBoards] = useState<Board[]>([]);
   const [publicBoards, setPublicBoards] = useState<Board[]>([]);
-  const [isCreating, setIsCreating] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinBoardId, setJoinBoardId] = useState("");
