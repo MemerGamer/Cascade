@@ -111,6 +111,24 @@ echo "To get the external IP of the Ingress:"
 echo "kubectl get svc -n ingress-nginx ingress-nginx-controller"
 echo "Then map that IP to 'cascade.local' in your /etc/hosts file OR access it directly via the IP."
 echo "------------------------------------------------"
+
+echo "🔄 Configuring Auth Service with Ingress IP..."
+# Wait for Ingress IP
+INGRESS_IP=""
+echo "Waiting for Ingress External IP..."
+while [ -z "$INGRESS_IP" ]; do
+  INGRESS_IP=$(kubectl get svc -n ingress-nginx ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}' 2>/dev/null || true)
+  if [ -z "$INGRESS_IP" ]; then
+    sleep 5
+  fi
+done
+
+echo "Ingress IP: $INGRESS_IP"
+echo "Updating cascade-auth deployment with TRUSTED_ORIGINS..."
+kubectl set env deployment/cascade-auth TRUSTED_ORIGINS="http://$INGRESS_IP"
+echo "✅ Auth service configured."
+
+echo "------------------------------------------------"
 echo "To access Kafka UI:"
 echo "kubectl port-forward svc/cascade-kafka-ui 8080:80"
 echo "Then open http://localhost:8080"

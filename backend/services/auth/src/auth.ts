@@ -23,6 +23,9 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:5173", // Frontend dev server
     "http://localhost:3000",
+    ...(process.env.TRUSTED_ORIGINS
+      ? process.env.TRUSTED_ORIGINS.split(",")
+      : []),
   ],
 });
 
