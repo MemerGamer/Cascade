@@ -59,7 +59,7 @@ gcloud container clusters get-credentials $CLUSTER_NAME --region $REGION --proje
 # 3. Helm Repositories
 echo "------------------------------------------------"
 echo "📦 Adding Helm repositories..."
-helm repo add bitnami https://charts.bitnami.com/bitnami
+
 helm repo add strimzi https://strimzi.io/charts/
 helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 helm repo add jetstack https://charts.jetstack.io

@@ -68,28 +68,6 @@ frontend:
 
 # Dependency Configuration
 
-# MongoDB (Bitnami)
-mongodb:
-  enabled: true
-  auth:
-    enabled: false # For demo simplicity, enable in prod
-  architecture: replicaset
-  replicaCount: 1 # Save resources for demo
-  persistence:
-    enabled: true
-    size: 1Gi
-
-# Redis (Bitnami)
-redis:
-  enabled: true
-  architecture: standalone # Save resources for demo
-  auth:
-    enabled: false
-  master:
-    persistence:
-      enabled: true
-      size: 1Gi
-
 # Kafka UI
 kafka-ui:
   enabled: true

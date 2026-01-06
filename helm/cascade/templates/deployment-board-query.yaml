@@ -29,7 +29,7 @@ spec:
             - name: PORT
               value: "3003"
             - name: MONGODB_URI
-              value: "mongodb://{{ .Release.Name }}-mongodb:27017/cascade-board"
+              value: "mongodb://{{ .Release.Name }}-mongodb-0.{{ .Release.Name }}-mongodb-headless:27017,{{ .Release.Name }}-mongodb-1.{{ .Release.Name }}-mongodb-headless:27017,{{ .Release.Name }}-mongodb-2.{{ .Release.Name }}-mongodb-headless:27017/cascade-board?replicaSet=rs0"
             - name: REDIS_HOST
               value: "{{ .Release.Name }}-redis-master"
             - name: REDIS_PORT

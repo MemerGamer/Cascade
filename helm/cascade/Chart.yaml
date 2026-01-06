@@ -15,14 +15,3 @@ dependencies:
     version: 0.7.5
     repository: https://provectus.github.io/kafka-ui-charts
     condition: kafka-ui.enabled
-
-  # Persistence
-  - name: mongodb
-    version: 18.1.20
-    repository: https://charts.bitnami.com/bitnami
-    condition: mongodb.enabled
-    
-  - name: redis
-    version: 24.1.0
-    repository: https://charts.bitnami.com/bitnami
-    condition: redis.enabled

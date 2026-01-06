@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "cascade.fullname" . }}-mongodb-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      containers:
+      - name: init-mongo
+        image: mongo:latest
+        command:
+        - bash
+        - -c
+        - |
+          echo "Waiting for mongodb-0..."
+          until mongosh --host {{ include "cascade.fullname" . }}-mongodb-0.{{ include "cascade.fullname" . }}-mongodb-headless --eval "print(\"waited for connection\")"; do sleep 2; done
+          echo "Initializing Replica Set..."
+          mongosh --host {{ include "cascade.fullname" . }}-mongodb-0.{{ include "cascade.fullname" . }}-mongodb-headless --eval '
+            try {
+              var status = rs.status();
+              if (status.ok === 1) {
+                print("Replica set already initialized");
+              } else {
+                throw new Error("Not initialized");
+              }
+            } catch (e) {
+              print("Initializing replica set...");
+              rs.initiate({
+                _id: "rs0",
+                members: [
+                  {_id: 0, host: "{{ include "cascade.fullname" . }}-mongodb-0.{{ include "cascade.fullname" . }}-mongodb-headless:27017"},
+                  {_id: 1, host: "{{ include "cascade.fullname" . }}-mongodb-1.{{ include "cascade.fullname" . }}-mongodb-headless:27017"},
+                  {_id: 2, host: "{{ include "cascade.fullname" . }}-mongodb-2.{{ include "cascade.fullname" . }}-mongodb-headless:27017"}
+                ]
+              });
+            }
+          '
+      restartPolicy: OnFailure
