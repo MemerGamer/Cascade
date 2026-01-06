@@ -57,7 +57,7 @@ frontend:
     enabled: true
     className: "nginx"
     hosts:
-      - host: cascade.local
+      - host: "*"
         paths:
           - path: /
             pathType: Prefix

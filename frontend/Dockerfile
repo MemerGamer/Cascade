@@ -8,6 +8,10 @@ COPY package.json bun.lock ./
 # Install dependencies
 RUN bun install --frozen-lockfile
 
+# Set production environment
+ARG NODE_ENV=production
+ENV NODE_ENV=production
+
 # Copy source code
 COPY . .
 

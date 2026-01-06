@@ -19,7 +19,7 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: ["http://localhost:5173", "http://localhost:3000"],
+    origin: (origin) => origin,
     credentials: true,
   })
 );
@@ -51,6 +51,19 @@ app.get("/api/boards", async (c) => {
       }).lean();
       await setCachedBoards(userId, boards);
     }
+
+    return c.json({ success: true, boards });
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500);
+  }
+});
+
+// Get public boards
+app.get("/api/boards/public", async (c) => {
+  try {
+    const boards = await Board.find({ visibility: "public" })
+      .sort({ createdAt: -1 })
+      .lean();
 
     return c.json({ success: true, boards });
   } catch (error: any) {

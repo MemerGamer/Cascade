@@ -47,6 +47,16 @@ To deploy the project to Google Kubernetes Engine (GKE) using Helm:
 2. Use the Helm charts located in the `helm/` directory.
 3. You can use the provided scripts to automate the process.
 
+### Accessing Kafka UI
+
+Kafka UI is not exposed via Ingress by default. To access it:
+
+```bash
+kubectl port-forward svc/cascade-kafka-ui 8080:80
+```
+
+Then open http://localhost:8080 in your browser.
+
 ## Scripts
 
 - `setup.sh`: Initializes the environment and prepares dependencies.

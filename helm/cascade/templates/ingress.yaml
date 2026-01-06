@@ -6,7 +6,7 @@ metadata:
   labels:
     {{- include "cascade.labels" . | nindent 4 }}
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+
     {{- if .Values.frontend.ingress.annotations }}
     {{- toYaml .Values.frontend.ingress.annotations | nindent 4 }}
     {{- end }}
@@ -14,7 +14,7 @@ spec:
   ingressClassName: {{ .Values.frontend.ingress.className }}
   rules:
     {{- range .Values.frontend.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - {{ if and .host (ne .host "*") }}host: {{ .host | quote }}{{ end }}
       http:
         paths:
           # API Gateway Route
