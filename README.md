@@ -20,11 +20,66 @@ Event-Driven Team Task Board on GKE
 ## Table of Contents
 
 - [About](#cascade)
+- [Architecture](#architecture)
 - [Getting Started](#getting-started)
   - [Local Development](#local-development)
   - [GKE Deployment](#gke-deployment)
 - [Scripts](#scripts)
 - [License](#license)
+
+## Architecture
+
+Cascade implements a microservices architecture with the following core services:
+
+### Services
+
+1. **Auth Service** (`auth`) - User authentication using Better Auth
+2. **Board Command Service** (`board-command`) - Write operations for boards and tasks
+3. **Board Query Service** (`board-query`) - Read operations with caching
+4. **Activity Service** (`activity`) - Real-time activity logging
+5. **Audit Service** (`audit`) - Immutable audit trail
+6. **API Docs Service** (`api-docs`) - Centralized API documentation
+
+### Microservices Patterns
+
+#### 1. CQRS (Command Query Responsibility Segregation)
+
+- **Command Service**: Handles all write operations
+- **Query Service**: Optimized for read operations with Redis caching
+- Async synchronization via Kafka events
+
+#### 2. Event Sourcing (Partial)
+
+- All state changes published as events to Kafka
+- Audit service maintains immutable event log
+
+#### 3. API Gateway Pattern
+
+- Nginx ingress controller routes traffic
+- Path-based routing to appropriate services
+
+#### 4. Database per Service
+
+- Each service has its own MongoDB database or collection
+- No shared databases between services
+
+#### 5. Saga Pattern (Orchestration)
+
+- Multi-step workflows coordinated via Kafka events
+- Example: Board creation triggers notifications and audit logs
+
+#### 6. Circuit Breaker (via Retry Logic)
+
+- Services implement retry mechanisms for Kafka connections
+
+### Event Flow
+
+1. User action → Command Service
+2. Command Service writes to DB
+3. Command Service publishes event to Kafka
+4. Query Service consumes event, invalidates cache
+5. Activity Service logs the event
+6. Audit Service stores immutable record
 
 ## Getting Started
 

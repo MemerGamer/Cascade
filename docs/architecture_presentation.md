@@ -14,7 +14,7 @@ graph TB
         Ingress[Nginx Ingress Controller]
 
         subgraph "API Gateway Layer"
-            Gateway[API Gateway (Nginx)]
+            Gateway["API Gateway (Nginx)"]
         end
 
         subgraph "Frontend Layer"
