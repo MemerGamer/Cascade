@@ -19,7 +19,7 @@ graph TB
 
         subgraph "Frontend Layer"
             FE[Frontend Service]
-            FE_Pods[Frontend Pods (HPA)]
+            FE_Pods["Frontend Pods (HPA)"]
         end
 
         subgraph "Microservices Layer"
@@ -31,7 +31,7 @@ graph TB
         end
 
         subgraph "Messaging & Persistence"
-            Kafka[Kafka Cluster (Strimzi)]
+            Kafka["Kafka Cluster (Strimzi)"]
             Mongo[MongoDB ReplicaSet]
             Redis[Redis Cluster]
         end
