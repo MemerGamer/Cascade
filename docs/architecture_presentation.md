@@ -110,3 +110,41 @@ sequenceDiagram
         Query-->>User: Return Boards from DB
     end
 ```
+
+## Slide 3: Reactive Programming Pattern (RxJS)
+
+This diagram shows how the Activity service uses reactive programming with RxJS to process Kafka events as observable streams.
+
+**Key Implementation Details:**
+
+- Activity service uses `ReactiveKafkaConsumer` wrapper for Kafka integration
+- Events are processed as RxJS Observable streams with operators
+- Demonstrates reactive paradigm with `map`, `filter`, `tap`, and `catchError` operators
+- Provides backpressure handling and graceful error recovery
+
+```mermaid
+sequenceDiagram
+    participant Kafka as Kafka Topics
+    participant Subject as RxJS Subject
+    participant Pipeline as Observable Pipeline
+    participant Activity as Activity Logger
+
+    Note over Kafka, Subject: Event Stream Initialization
+    Kafka->>Subject: Message arrives (board.created)
+    Subject->>Pipeline: next(payload)
+
+    Note over Pipeline: Reactive Operators Chain
+    Note over Pipeline: tap - log debug info
+    Note over Pipeline: filter - validate data exists
+    Note over Pipeline: map - transform to activity
+    Note over Pipeline: catchError - handle errors gracefully
+
+    Pipeline->>Activity: Processed event
+    Activity->>Activity: Log activity to stdout
+    
+    Note over Subject, Activity: Stream Continues (Non-blocking)
+    
+    Kafka->>Subject: Next message (task.moved)
+    Subject->>Pipeline: next(payload)
+    Pipeline->>Activity: Processed event
+```

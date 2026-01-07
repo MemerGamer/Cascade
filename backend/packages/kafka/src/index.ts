@@ -82,3 +82,6 @@ export class KafkaClient {
     if (this.consumer) await this.consumer.disconnect();
   }
 }
+
+// Reactive programming support
+export * from "./reactive";

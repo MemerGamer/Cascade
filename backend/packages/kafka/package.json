@@ -4,6 +4,7 @@
     "main": "src/index.ts",
     "dependencies": {
         "kafkajs": "^2.2.4",
+        "rxjs": "^7.8.1",
         "zod": "^4.3.5"
     },
     "devDependencies": {

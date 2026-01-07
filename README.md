@@ -75,6 +75,13 @@ All services are deployed to both local (Docker Compose) and production (GKE) en
 
 - Services implement retry mechanisms for Kafka connections
 
+#### 7. Reactive Programming (RxJS)
+
+- **Observable Streams**: Kafka events processed as reactive streams
+- **Operators**: map, filter, tap, catchError for event transformation
+- **Backpressure**: Built-in handling via RxJS
+- **Error Recovery**: Graceful error handling with stream continuation
+
 ### Event Flow
 
 1. User action → Command Service
