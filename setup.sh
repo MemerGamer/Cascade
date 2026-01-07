@@ -124,9 +124,13 @@ while [ -z "$INGRESS_IP" ]; do
 done
 
 echo "Ingress IP: $INGRESS_IP"
-echo "Updating cascade-auth deployment with TRUSTED_ORIGINS..."
-kubectl set env deployment/cascade-auth TRUSTED_ORIGINS="http://$INGRESS_IP"
+echo "Updating cascade-auth deployment with BASE_URL and TRUSTED_ORIGINS..."
+BASE_URL="http://$INGRESS_IP.nip.io"
+kubectl set env deployment/cascade-auth \
+  BASE_URL="$BASE_URL" \
+  TRUSTED_ORIGINS="http://$INGRESS_IP,http://$INGRESS_IP.nip.io"
 echo "✅ Auth service configured."
+echo "📝 GitHub OAuth Callback URL: $BASE_URL/api/auth/callback/github"
 
 echo "------------------------------------------------"
 echo "To access Kafka UI:"

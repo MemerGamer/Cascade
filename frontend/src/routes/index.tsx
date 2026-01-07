@@ -147,7 +147,7 @@ function App() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
+            <h1 className="text-4xl font-bold bg-linear-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
               Dashboard
             </h1>
             <p className="text-slate-400">Manage your projects and tasks</p>
@@ -203,6 +203,7 @@ function App() {
                 className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 hover:shadow-xl hover:shadow-cyan-900/10 transition-all group block relative"
               >
                 <button
+                  title="Delete Board"
                   onClick={(e) => handleDeleteBoard(e, board._id)}
                   className="absolute top-4 right-4 p-2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-400 transition-all"
                 >
@@ -489,7 +490,7 @@ function CreateBoardModal({
             <button
               type="submit"
               disabled={creating || !name.trim()}
-              className="flex-1 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 rounded-lg font-medium disabled:opacity-50 transition-colors"
+              className="flex-1 py-3 bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 rounded-lg font-medium disabled:opacity-50 transition-colors"
             >
               {creating ? (
                 <Loader2 className="w-5 h-5 animate-spin mx-auto" />
@@ -509,7 +510,7 @@ function LandingPage() {
     <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent mb-2">
             Cascade
           </h1>
           <p className="text-slate-400">Microservices-based Task Management</p>
@@ -550,6 +551,17 @@ function LoginForm() {
     }
   }
 
+  async function handleGitHubSignIn() {
+    try {
+      await authClient.signIn.social({
+        provider: "github",
+      });
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + (err as Error).message);
+    }
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="space-y-1">
@@ -580,7 +592,7 @@ function LoginForm() {
       </div>
 
       <button
-        className="mt-2 w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white p-3 rounded-lg font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
+        className="mt-2 w-full bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white p-3 rounded-lg font-bold transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-500/20"
         disabled={loading}
       >
         {loading ? (
@@ -590,6 +602,21 @@ function LoginForm() {
         ) : (
           "Sign In"
         )}
+      </button>
+
+      <div className="relative flex items-center gap-2 py-2">
+        <div className="flex-1 border-t border-slate-800"></div>
+        <span className="text-xs text-slate-500 uppercase">Or</span>
+        <div className="flex-1 border-t border-slate-800"></div>
+      </div>
+
+      <button
+        type="button"
+        onClick={handleGitHubSignIn}
+        className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white p-3 rounded-lg font-medium transition-all active:scale-95"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" className="lucide lucide-github-icon lucide-github"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>
+        Continue with GitHub
       </button>
 
       <button

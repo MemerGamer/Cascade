@@ -37,6 +37,23 @@ spec:
                 secretKeyRef:
                   name: {{ include "cascade.fullname" . }}-secrets
                   key: JWT_SECRET
+            - name: AUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cascade.fullname" . }}-secrets
+                  key: AUTH_SECRET
+            - name: GITHUB_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cascade.fullname" . }}-secrets
+                  key: GITHUB_CLIENT_ID
+            - name: GITHUB_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "cascade.fullname" . }}-secrets
+                  key: GITHUB_CLIENT_SECRET
+            - name: BASE_URL
+              value: "http://localhost:3001"
           resources:
             {{- toYaml .Values.auth.resources | nindent 12 }}
 ---

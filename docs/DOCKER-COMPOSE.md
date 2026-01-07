@@ -24,13 +24,13 @@ Once running, the following services will be available:
 
 | Service          | URL                   | Description                   |
 | ---------------- | --------------------- | ----------------------------- |
-| Frontend         | http://localhost:5173 | React UI                      |
-| Auth Service     | http://localhost:3001 | Authentication                |
-| Board Command    | http://localhost:3002 | Write API                     |
-| Board Query      | http://localhost:3003 | Read API                      |
-| Activity Service | http://localhost:3004 | Event logging                 |
-| Audit Service    | http://localhost:3005 | Audit trail                   |
-| API Docs         | http://localhost:3006 | Centralized API Documentation |
+| Frontend         | <http://localhost:5173> | React UI                      |
+| Auth Service     | <http://localhost:3001> | Authentication                |
+| Board Command    | <http://localhost:3002> | Write API                     |
+| Board Query      | <http://localhost:3003> | Read API                      |
+| Activity Service | <http://localhost:3004> | Event logging                 |
+| Audit Service    | <http://localhost:3005> | Audit trail                   |
+| API Docs         | <http://localhost:3006> | Centralized API Documentation |
 | Kafka            | localhost:9092        | Event streaming               |
 | MongoDB          | localhost:27017-27019 | Database (3-node replica set) |
 | Redis            | localhost:6379        | Cache                         |
@@ -41,6 +41,35 @@ Once running, the following services will be available:
 - **MongoDB**: 3-node replica set for high availability
 - **Redis**: Single instance for caching
 - **Microservices**: Event-driven with CQRS pattern
+
+## Configuring GitHub OAuth (Optional)
+
+To enable GitHub OAuth authentication in local development:
+
+1. **Create a GitHub OAuth App** at <https://github.com/settings/developers>:
+
+   - Homepage URL: `http://localhost:5173`
+   - Callback URL: `http://localhost:3001/api/auth/callback/github`
+
+2. **Create environment file** for auth service:
+
+   ```bash
+   # backend/services/auth/.env
+   GITHUB_CLIENT_ID=your_client_id_here
+   GITHUB_CLIENT_SECRET=your_client_secret_here
+   AUTH_SECRET=your_random_secret_string
+   BASE_URL=http://localhost:3001
+   ```
+
+3. **Restart auth service**:
+
+   ```bash
+   docker compose restart auth
+   ```
+
+4. **Test**: Visit <http://localhost:5173> and you should see "Continue with GitHub" button.
+
+For detailed setup instructions, see [GitHub OAuth Setup Guide](./GITHUB-OAUTH.md).
 
 ## Health Checks
 

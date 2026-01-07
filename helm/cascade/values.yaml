@@ -85,3 +85,9 @@ kafka-ui:
       clusters:
         - name: cascade-cluster
           bootstrapServers: cascade-kafka-kafka-bootstrap:9092
+
+# Secrets Configuration
+secrets:
+  authSecret: "change-me-in-production"
+  githubClientId: ""
+  githubClientSecret: ""

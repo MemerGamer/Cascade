@@ -24,6 +24,7 @@ Event-Driven Team Task Board on GKE
 - [Getting Started](#getting-started)
   - [Local Development](#local-development)
   - [GKE Deployment](#gke-deployment)
+- [Authentication](#authentication)
 - [Scripts](#scripts)
 - [License](#license)
 
@@ -33,7 +34,7 @@ Cascade implements a microservices architecture with the following core services
 
 ### Services
 
-1. **Auth Service** (`auth`) - User authentication using Better Auth
+1. **Auth Service** (`auth`) - User authentication using Better Auth with email/password and GitHub OAuth
 2. **Board Command Service** (`board-command`) - Write operations for boards and tasks
 3. **Board Query Service** (`board-query`) - Read operations with caching
 4. **Activity Service** (`activity`) - Real-time activity logging
@@ -89,18 +90,33 @@ To run the project locally using Docker Compose:
 
 1. Ensure you have [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed.
 2. Start the services:
+
    ```bash
    docker-compose up --build
    ```
+
    More details in the local [docker compose documentation](./docs/DOCKER-COMPOSE.md).
 
 ### GKE Deployment
 
 To deploy the project to Google Kubernetes Engine (GKE) using Helm:
 
-1. Configure your `gcloud` CLI and Kubernetes context.
-2. Use the Helm charts located in the `helm/` directory.
-3. You can use the provided scripts to automate the process.
+**Quick Start**:
+
+```bash
+./setup.sh <YOUR_PROJECT_ID>
+```
+
+**Manual Deployment**: See the [Deployment Checklist](./docs/DEPLOYMENT-CHECKLIST.md) for step-by-step instructions.
+
+**Key Features**:
+
+- Automated cluster setup and configuration
+- Kafka with KRaft mode (no Zookeeper)
+- MongoDB 3-node replica set
+- Redis caching layer
+- Nginx Ingress with dynamic IP support (nip.io)
+- GitHub OAuth authentication
 
 ### Accessing Kafka UI
 
@@ -110,15 +126,50 @@ Kafka UI is not exposed via Ingress by default. To access it:
 kubectl port-forward svc/cascade-kafka-ui 8080:80
 ```
 
-Then open http://localhost:8080 in your browser.
+Then open <http://localhost:8080> in your browser.
+
+## Authentication
+
+Cascade supports multiple authentication methods:
+
+### Email/Password Authentication
+
+Users can sign up and sign in using email and password (powered by Better Auth).
+
+### GitHub OAuth
+
+Users can sign in with their GitHub accounts for a seamless experience.
+
+**Setup Instructions**: See [GitHub OAuth Setup Guide](./docs/GITHUB-OAUTH.md) for detailed configuration steps.
+
+**Quick Setup**:
+
+1. Create a GitHub OAuth App at <https://github.com/settings/developers>
+2. Deploy with secrets:
+
+   ```bash
+   helm upgrade cascade helm/cascade \
+     --set secrets.githubClientId="your-client-id" \
+     --set secrets.githubClientSecret="your-secret"
+   ```
+
+3. Configure callback URL: `http://<INGRESS_IP>/api/auth/callback/github`
 
 ## API Documentation
 
 API documentation is available via Scalar for each microservice when running:
 
-- **Centralized API Docs**: http://localhost:3006
+- **Centralized API Docs**: <http://localhost:3006>
 
-For architecture diagrams and detailed documentation, see [docs/architecture_presentation.md](./docs/architecture_presentation.md).
+## Documentation
+
+- **[Architecture Overview](./docs/architecture_presentation.md)** - High-level architecture diagrams
+- **[GKE Architecture Guide](./docs/GKE-ARCHITECTURE.md)** - Detailed documentation on how Cascade works in Kubernetes
+  - Service discovery and communication patterns
+  - Database architecture and synchronization
+  - Caching strategy and data flow
+  - Event-driven architecture with Kafka
+  - Complete deployment topology
 
 ## Scripts
 
