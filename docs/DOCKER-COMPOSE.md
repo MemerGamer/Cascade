@@ -30,6 +30,7 @@ Once running, the following services will be available:
 | Board Query      | http://localhost:3003 | Read API                      |
 | Activity Service | http://localhost:3004 | Event logging                 |
 | Audit Service    | http://localhost:3005 | Audit trail                   |
+| API Docs         | http://localhost:3006 | Centralized API Documentation |
 | Kafka            | localhost:9092        | Event streaming               |
 | MongoDB          | localhost:27017-27019 | Database (3-node replica set) |
 | Redis            | localhost:6379        | Cache                         |

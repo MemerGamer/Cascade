@@ -1,4 +1,4 @@
-# Cascade Architecture Slides
+# Cascade Architecture Presentation
 
 ## Slide 1: System Architecture on GKE
 
@@ -28,6 +28,7 @@ graph TB
             Query[Board Query Service]
             Activity[Activity Service]
             Audit[Audit Service]
+            ApiDocs[API Docs Service]
         end
 
         subgraph "Messaging & Persistence"
