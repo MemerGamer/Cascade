@@ -1,6 +1,6 @@
-import { Hono } from "hono";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
-import { pinoLogger } from "@cascade/logger";
+import { pinoLogger, GlobalLogger } from "@cascade/logger";
 import { Board, Task } from "./models";
 import {
   initKafka,
@@ -28,7 +28,7 @@ import {
 } from "./schemas";
 import "dotenv/config";
 
-const app = new Hono();
+export const app = new OpenAPIHono();
 
 // Middleware
 app.use(
@@ -44,6 +44,15 @@ app.use(pinoLogger());
 app.get("/health", (c) =>
   c.json({ status: "ok", service: "board-command-service" })
 );
+
+// OpenAPI Docs
+app.doc("/doc", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Board Command Service API",
+  },
+});
 
 // ============ BOARD ENDPOINTS ============
 
@@ -509,7 +518,7 @@ app.patch("/api/tasks/:id/reorder", async (c) => {
 // Initialize Kafka
 await initKafka();
 
-console.log(
+GlobalLogger.logger.info(
   `Board Command Service starting on port ${process.env.PORT || 3002}`
 );
 

@@ -1,5 +1,6 @@
 import { KafkaClient, type EachMessagePayload } from "@cascade/kafka";
 import { AuditEvent } from "./models";
+import { GlobalLogger } from "@cascade/logger";
 import "dotenv/config";
 
 const KAFKA_BROKERS = (process.env.KAFKA_BROKERS || "localhost:9092").split(
@@ -23,7 +24,7 @@ export async function initKafka() {
   );
 
   await kafkaClient.consume(handleEvent);
-  console.log("Audit consumer started - storing immutable events");
+  GlobalLogger.logger.info("Audit consumer started - storing immutable events");
 }
 
 async function handleEvent(payload: EachMessagePayload) {
@@ -39,8 +40,8 @@ async function handleEvent(payload: EachMessagePayload) {
       timestamp: new Date(event.timestamp || Date.now()),
     });
 
-    console.log(`[AUDIT] Stored: ${topic}`);
+    GlobalLogger.logger.info(`[AUDIT] Stored: ${topic}`);
   } catch (error) {
-    console.error(`Error storing audit event for ${topic}:`, error);
+    GlobalLogger.logger.error(error, `Error storing audit event for ${topic}`);
   }
 }

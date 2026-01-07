@@ -1,19 +1,30 @@
-import { Hono } from 'hono';
-import { pinoLogger } from '@cascade/logger';
-import { initKafka } from './kafka';
-import 'dotenv/config';
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { pinoLogger, GlobalLogger } from "@cascade/logger";
+import { initKafka } from "./kafka";
+import "dotenv/config";
 
-const app = new Hono();
+export const app = new OpenAPIHono();
 
 app.use(pinoLogger());
 
 // Health check
-app.get('/health', (c) => c.json({ status: 'ok', service: 'audit-service' }));
+app.get("/health", (c) => c.json({ status: "ok", service: "audit-service" }));
+
+// OpenAPI Docs
+app.doc("/doc", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Audit Service API",
+  },
+});
 
 // Initialize Kafka consumer
-initKafka().catch(console.error);
+initKafka().catch((err) => GlobalLogger.logger.error(err));
 
-console.log(`Audit Service starting on port ${process.env.PORT || 3005}`);
+GlobalLogger.logger.info(
+  `Audit Service starting on port ${process.env.PORT || 3005}`
+);
 
 export default {
   port: process.env.PORT || 3005,

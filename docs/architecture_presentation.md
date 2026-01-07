@@ -26,6 +26,8 @@ graph TB
             Auth[Auth Service]
             Cmd[Board Command Service]
             Query[Board Query Service]
+            Activity[Activity Service]
+            Audit[Audit Service]
         end
 
         subgraph "Messaging & Persistence"
@@ -47,10 +49,13 @@ graph TB
 
     Cmd -->|Events| Kafka
     Kafka -->|Events| Query
+    Kafka -->|Events| Activity
+    Kafka -->|Events| Audit
 
     Auth --> Mongo
     Cmd --> Mongo
     Query --> Mongo
+    Audit --> Mongo
     Query --> Redis
 ```
 

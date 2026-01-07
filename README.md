@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="cascade-logo.png" alt="Cascade Logo" width="275" />
+<img src="docs/assets/cascade-logo.png" alt="Cascade Logo" width="275" />
 
 Event-Driven Team Task Board on GKE
 
@@ -37,7 +37,7 @@ To run the project locally using Docker Compose:
    ```bash
    docker-compose up --build
    ```
-   More details in the local [docker compose documentation](./DOCKER-COMPOSE.md).
+   More details in the local [docker compose documentation](./docs/DOCKER-COMPOSE.md).
 
 ### GKE Deployment
 
@@ -56,6 +56,14 @@ kubectl port-forward svc/cascade-kafka-ui 8080:80
 ```
 
 Then open http://localhost:8080 in your browser.
+
+## API Documentation
+
+API documentation is available via Scalar for each microservice when running:
+
+- **Centralized API Docs**: http://localhost:3006
+
+For architecture diagrams and detailed documentation, see [docs/architecture_presentation.md](./docs/architecture_presentation.md).
 
 ## Scripts
 

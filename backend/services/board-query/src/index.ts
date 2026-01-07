@@ -1,6 +1,6 @@
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { cors } from "hono/cors";
-import { pinoLogger } from "@cascade/logger";
+import { pinoLogger, GlobalLogger } from "@cascade/logger";
 import { Board, Task } from "./models";
 import {
   getCachedBoards,
@@ -13,7 +13,7 @@ import {
 import { initKafka } from "./kafka";
 import "dotenv/config";
 
-const app = new Hono();
+export const app = new OpenAPIHono();
 
 // Middleware
 app.use(
@@ -29,6 +29,15 @@ app.use(pinoLogger());
 app.get("/health", (c) =>
   c.json({ status: "ok", service: "board-query-service" })
 );
+
+// OpenAPI Docs
+app.doc("/doc", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Board Query Service API",
+  },
+});
 
 // Get all boards for a user (owner or member)
 app.get("/api/boards", async (c) => {
@@ -135,7 +144,9 @@ app.get("/api/tasks/:id", async (c) => {
 // Initialize Kafka consumer
 initKafka().catch(console.error);
 
-console.log(`Board Query Service starting on port ${process.env.PORT || 3003}`);
+GlobalLogger.logger.info(
+  `Board Query Service starting on port ${process.env.PORT || 3003}`
+);
 
 export default {
   port: process.env.PORT || 3003,

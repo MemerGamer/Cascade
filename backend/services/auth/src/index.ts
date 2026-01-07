@@ -1,11 +1,12 @@
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
+
 import { cors } from "hono/cors";
-import { pinoLogger } from "@cascade/logger";
+import { pinoLogger, GlobalLogger } from "@cascade/logger";
 import { auth } from "./auth";
 import { initKafka, publishUserRegistered, publishUserLoggedIn } from "./kafka";
 import "dotenv/config";
 
-const app = new Hono();
+export const app = new OpenAPIHono();
 
 // Middleware
 app.use(
@@ -47,7 +48,7 @@ app.on(["GET", "POST"], "/api/auth/*", async (c) => {
       }
     }
   } catch (error) {
-    console.error("Error publishing Kafka event:", error);
+    GlobalLogger.logger.error(error, "Error publishing Kafka event");
   }
 
   return response;
@@ -56,7 +57,9 @@ app.on(["GET", "POST"], "/api/auth/*", async (c) => {
 // Initialize Kafka
 await initKafka();
 
-console.log(`Auth Service starting on port ${process.env.PORT || 3001}`);
+GlobalLogger.logger.info(
+  `Auth Service starting on port ${process.env.PORT || 3001}`
+);
 
 export default {
   port: process.env.PORT || 3001,

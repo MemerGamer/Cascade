@@ -1,6 +1,7 @@
 import { KafkaClient, type EachMessagePayload } from "@cascade/kafka";
 import { Board, Task } from "./models";
 import { invalidateBoardCache, invalidateTaskCache } from "./cache";
+import { GlobalLogger } from "@cascade/logger";
 import "dotenv/config";
 
 const KAFKA_BROKERS = (process.env.KAFKA_BROKERS || "localhost:9092").split(
@@ -25,14 +26,14 @@ const TOPICS = [
 export async function initKafka() {
   await kafkaClient.connectConsumer("board-query-group", TOPICS, false);
   await kafkaClient.consume(handleEvent);
-  console.log("Kafka consumer started");
+  GlobalLogger.logger.info("Kafka consumer started");
 }
 
 async function handleEvent(payload: EachMessagePayload) {
   const { topic, message } = payload;
   const event = JSON.parse(message.value?.toString() || "{}");
 
-  console.log(`Processing event: ${topic}`, event);
+  GlobalLogger.logger.info(`Processing event: ${topic}`, event);
 
   try {
     switch (topic) {
@@ -59,7 +60,7 @@ async function handleEvent(payload: EachMessagePayload) {
         break;
     }
   } catch (error) {
-    console.error(`Error handling ${topic}:`, error);
+    GlobalLogger.logger.error(error, `Error handling ${topic}`);
   }
 }
 

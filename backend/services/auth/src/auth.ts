@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { openAPI } from "better-auth/plugins";
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import "dotenv/config";
@@ -18,6 +19,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  plugins: [openAPI()],
   secret: process.env.AUTH_SECRET || "default-secret-change-in-production",
   baseURL: process.env.BASE_URL || "http://localhost:3001",
   trustedOrigins: [

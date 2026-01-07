@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
+import { GlobalLogger } from "@cascade/logger";
 import "dotenv/config";
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/board-db";
 
 await mongoose.connect(MONGODB_URI);
-console.log("Connected to MongoDB:", MONGODB_URI);
+GlobalLogger.logger.info(`Connected to MongoDB: ${MONGODB_URI}`);
 
 // Column schema for custom columns
 const ColumnSchema = new mongoose.Schema({

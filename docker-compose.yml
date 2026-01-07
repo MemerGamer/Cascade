@@ -240,6 +240,19 @@ volumes:
   mongo3_data:
   redis_data:
 
+  api-docs:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        SERVICE_NAME: api-docs
+    ports:
+      - "3006:3006"
+    environment:
+      - PORT=3006
+    networks:
+      - cascade-network
+
 networks:
   default:
     name: cascade-network

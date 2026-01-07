@@ -1,11 +1,12 @@
 import mongoose from "mongoose";
+import { GlobalLogger } from "@cascade/logger";
 import "dotenv/config";
 
 const MONGODB_URI =
   process.env.MONGODB_URI || "mongodb://localhost:27017/board-db";
 
 await mongoose.connect(MONGODB_URI);
-console.log("Connected to MongoDB (read-only):", MONGODB_URI);
+GlobalLogger.logger.info(`Connected to MongoDB (read-only): ${MONGODB_URI}`);
 
 // Read models - same schema structure as command service (for queries)
 const ColumnSchema = new mongoose.Schema({

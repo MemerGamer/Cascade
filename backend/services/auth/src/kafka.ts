@@ -1,4 +1,5 @@
 import { KafkaClient } from "@cascade/kafka";
+import { GlobalLogger } from "@cascade/logger";
 import "dotenv/config";
 
 const KAFKA_BROKERS = (process.env.KAFKA_BROKERS || "localhost:9092").split(
@@ -9,7 +10,7 @@ export const kafkaClient = new KafkaClient("auth-service", KAFKA_BROKERS);
 
 export async function initKafka() {
   await kafkaClient.connectProducer();
-  console.log("Kafka producer connected");
+  GlobalLogger.logger.info("Kafka producer connected");
 }
 
 export async function publishUserRegistered(

@@ -1,12 +1,13 @@
 import Redis from "ioredis";
+import { GlobalLogger } from "@cascade/logger";
 import "dotenv/config";
 
 const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
 
 export const redis = new Redis(REDIS_URL);
 
-redis.on("connect", () => console.log("Redis connected"));
-redis.on("error", (err) => console.error("Redis error:", err));
+redis.on("connect", () => GlobalLogger.logger.info("Redis connected"));
+redis.on("error", (err) => GlobalLogger.logger.error(err, "Redis error"));
 
 const CACHE_TTL = 300; // 5 minutes
 
