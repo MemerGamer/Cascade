@@ -1,4 +1,4 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { pinoLogger, GlobalLogger } from "@cascade/logger";
 import { initKafka } from "./kafka";
@@ -9,8 +9,25 @@ export const app = new OpenAPIHono();
 app.use(pinoLogger());
 
 // Health check
-app.get("/health", (c) =>
-  c.json({ status: "ok", service: "activity-service" })
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/health",
+    responses: {
+      200: {
+        description: "Health check",
+        content: {
+          "application/json": {
+            schema: z.object({
+              status: z.string(),
+              service: z.string(),
+            }),
+          },
+        },
+      },
+    },
+  }),
+  (c) => c.json({ status: "ok", service: "activity-service" })
 );
 
 // OpenAPI Docs

@@ -1,4 +1,4 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 
 import { cors } from "hono/cors";
 import { pinoLogger, GlobalLogger } from "@cascade/logger";
@@ -7,6 +7,8 @@ import { initKafka, publishUserRegistered, publishUserLoggedIn } from "./kafka";
 import "dotenv/config";
 
 export const app = new OpenAPIHono();
+
+const BetterAuthOpenAPISpecSchema = z.object({}).passthrough();
 
 // Middleware
 app.use(
@@ -19,7 +21,57 @@ app.use(
 app.use(pinoLogger());
 
 // Health check
-app.get("/health", (c) => c.json({ status: "ok", service: "auth-service" }));
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/health",
+    responses: {
+      200: {
+        description: "Health check",
+        content: {
+          "application/json": {
+            schema: z.object({
+              status: z.string(),
+              service: z.string(),
+            }),
+          },
+        },
+      },
+    },
+  }),
+  (c) => c.json({ status: "ok", service: "auth-service" })
+);
+
+// OpenAPI Docs (service-level; Better Auth exposes its own schema under /api/auth/open-api/*)
+app.doc("/doc", {
+  openapi: "3.0.0",
+  info: {
+    version: "1.0.0",
+    title: "Auth Service API",
+  },
+});
+
+// Better Auth OpenAPI (documented + validated as "returns an object")
+app.openapi(
+  createRoute({
+    method: "get",
+    path: "/api/auth/open-api/generate-schema",
+    responses: {
+      200: {
+        description: "Better Auth OpenAPI schema",
+        content: {
+          "application/json": {
+            schema: BetterAuthOpenAPISpecSchema,
+          },
+        },
+      },
+    },
+  }),
+  async (c) => {
+    const response = await auth.handler(c.req.raw);
+    return response as any;
+  }
+);
 
 // Better-Auth routes
 app.on(["GET", "POST"], "/api/auth/*", async (c) => {

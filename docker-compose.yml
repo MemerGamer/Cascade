@@ -233,25 +233,25 @@ services:
       - board-query-service
     restart: unless-stopped
 
-volumes:
-  kafka_data:
-  mongo1_data:
-  mongo2_data:
-  mongo3_data:
-  redis_data:
-
+  # API Docs (Scalar)
   api-docs:
     build:
       context: ./backend
       dockerfile: Dockerfile
       args:
         SERVICE_NAME: api-docs
+    container_name: cascade-api-docs
     ports:
       - "3006:3006"
     environment:
       - PORT=3006
-    networks:
-      - cascade-network
+
+volumes:
+  kafka_data:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  redis_data:
 
 networks:
   default:

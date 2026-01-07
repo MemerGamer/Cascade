@@ -48,6 +48,15 @@ boardQuery:
     minReplicas: 1
     maxReplicas: 5
 
+apiDocs:
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+  autoscaling:
+    enabled: false
+
 frontend:
   replicaCount: 1
   service:

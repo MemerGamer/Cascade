@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cascade.fullname" . }}-api-docs
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api-docs
+spec:
+  replicas: {{ .Values.apiDocs.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "cascade.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: api-docs
+  template:
+    metadata:
+      labels:
+        {{- include "cascade.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: api-docs
+    spec:
+      containers:
+        - name: api-docs
+          image: "{{ .Values.app.image.repository }}/api-docs:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3006
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3006"
+            # Used by api-docs to build in-cluster service URLs reliably
+            - name: CASCADE_SERVICE_PREFIX
+              value: {{ include "cascade.fullname" . | quote }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          resources:
+            {{- toYaml .Values.apiDocs.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cascade.fullname" . }}-api-docs
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: api-docs
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3006
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "cascade.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: api-docs

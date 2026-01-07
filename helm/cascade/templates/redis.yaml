@@ -1,25 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "cascade.fullname" . }}-redis
+  name: '{{ include "cascade.fullname" . }}-redis'
   labels:
-    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ include "cascade.name" . }}'
+    app.kubernetes.io/instance: '{{ .Release.Name }}'
     app.kubernetes.io/component: redis
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "cascade.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: '{{ include "cascade.name" . }}'
+      app.kubernetes.io/instance: '{{ .Release.Name }}'
       app.kubernetes.io/component: redis
   template:
     metadata:
       labels:
-        {{- include "cascade.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: '{{ include "cascade.name" . }}'
+        app.kubernetes.io/instance: '{{ .Release.Name }}'
         app.kubernetes.io/component: redis
     spec:
       containers:
         - name: redis
           image: redis:latest
+          command: ["redis-server"]
+          args:
+            # If RDB persistence can't write (e.g. storage/permission issue), don't block all writes.
+            - "--stop-writes-on-bgsave-error"
+            - "no"
           ports:
             - containerPort: 6379
           volumeMounts:
@@ -28,31 +36,47 @@ spec:
       volumes:
         - name: data
           persistentVolumeClaim:
-            claimName: {{ include "cascade.fullname" . }}-redis
+            claimName: '{{ include "cascade.fullname" . }}-redis'
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "cascade.fullname" . }}-redis-master
+  name: '{{ include "cascade.fullname" . }}-redis-master'
   labels:
-    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ include "cascade.name" . }}'
+    app.kubernetes.io/instance: '{{ .Release.Name }}'
     app.kubernetes.io/component: redis
 spec:
   ports:
     - port: 6379
       targetPort: 6379
   selector:
-    {{- include "cascade.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ include "cascade.name" . }}'
+    app.kubernetes.io/instance: '{{ .Release.Name }}'
     app.kubernetes.io/component: redis
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
+{{ $redisPvcName := printf "%s-redis" (include "cascade.fullname" .) }}
+{{ $existingRedisPvc := lookup "v1" "PersistentVolumeClaim" .Release.Namespace $redisPvcName }}
+{{ $existingRedisStorageClass := "" }}
+{{ if $existingRedisPvc }}
+{{ $existingRedisStorageClass = $existingRedisPvc.spec.storageClassName | default "" }}
+{{ end }}
+{{ $redisValues := (.Values.redis | default dict) }}
+{{ $valuesRedisStorageClass := (index $redisValues "storageClassName" | default "") }}
+{{ $redisStorageClass := coalesce $existingRedisStorageClass $valuesRedisStorageClass .Values.global.storageClass }}
 metadata:
-  name: {{ include "cascade.fullname" . }}-redis
+  name: '{{ include "cascade.fullname" . }}-redis'
   labels:
-    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/name: '{{ include "cascade.name" . }}'
+    app.kubernetes.io/instance: '{{ .Release.Name }}'
     app.kubernetes.io/component: redis
 spec:
+  # storageClassName is immutable for bound PVCs; prefer the existing PVC's class on upgrade.
+  {{ if $redisStorageClass }}
+  storageClassName: {{ $redisStorageClass | quote }}
+  {{ end }}
   accessModes:
     - ReadWriteOnce
   resources:

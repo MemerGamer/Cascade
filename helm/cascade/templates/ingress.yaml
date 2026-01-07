@@ -6,7 +6,6 @@ metadata:
   labels:
     {{- include "cascade.labels" . | nindent 4 }}
   annotations:
-
     {{- if .Values.frontend.ingress.annotations }}
     {{- toYaml .Values.frontend.ingress.annotations | nindent 4 }}
     {{- end }}
@@ -25,6 +24,14 @@ spec:
                 name: {{ include "cascade.fullname" $ }}-api-gateway
                 port:
                   number: 80
+          # API Docs Route
+          - path: /reference
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "cascade.fullname" $ }}-api-docs
+                port:
+                  number: 3006
           # Frontend Route
           - path: /
             pathType: Prefix
