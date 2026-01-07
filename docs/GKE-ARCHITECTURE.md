@@ -36,6 +36,8 @@ The following services are deployed to the Kubernetes cluster:
 | **Auth Service** | 3001 | User authentication (Better Auth) | 1-5 (autoscaling) |
 | **Board Command** | 3002 | Write operations for boards/tasks | 1-5 (autoscaling) |
 | **Board Query** | 3003 | Read operations with caching | 1-5 (autoscaling) |
+| **Activity Service** | 3004 | Real-time activity logging (Kafka consumer) | 1 (static) |
+| **Audit Service** | 3005 | Immutable audit trail (Kafka consumer) | 1 (static) |
 | **API Docs** | 3006 | Scalar API documentation | 1 (static) |
 
 ### Infrastructure Components
@@ -46,8 +48,6 @@ The following services are deployed to the Kubernetes cluster:
 | **Redis** | Deployment (1 replica) | Caching layer for read operations |
 | **Kafka** | Strimzi Operator (1 node) | Event streaming platform (KRaft mode) |
 | **Nginx Ingress** | Controller | External traffic routing |
-
-**Note:** Activity and Audit services are defined in docker-compose for local development but are **NOT deployed** to the GKE cluster. The production cluster uses only the core services listed above.
 
 ---
 
@@ -299,7 +299,104 @@ async function handleBoardUpdated(event: any) {
 
 **Cache TTL:** 5 minutes (300 seconds)
 
-### 7. API Docs Service
+### 7. Activity Service
+
+**Port:** 3004  
+**Purpose:** Real-time activity monitoring and logging
+
+**Responsibilities:**
+1. Consume all relevant Kafka events
+2. Log activities in real-time
+3. Provide activity monitoring capabilities
+
+**Kafka Events Consumed:**
+- `user.registered`
+- `user.logged_in`
+- `board.created`
+- `task.created`
+- `task.moved`
+- `task.updated`
+
+**No Database:** Activity service only logs to stdout (captured by Kubernetes logging)
+
+**Use Cases:**
+- Real-time activity monitoring
+- Debugging and troubleshooting
+- User behavior analytics
+- System health monitoring
+
+**Example Activity Log:**
+```json
+{
+  "event": "task.moved",
+  "data": {
+    "taskId": "507f1f77bcf86cd799439012",
+    "boardId": "507f1f77bcf86cd799439011",
+    "oldColumnId": "col_todo",
+    "newColumnId": "col_inprogress"
+  },
+  "processedAt": "2025-01-07T10:40:00.000Z"
+}
+```
+
+### 8. Audit Service
+
+**Port:** 3005  
+**Database:** `cascade-audit` (MongoDB)  
+**Purpose:** Immutable audit trail for compliance and security
+
+**Responsibilities:**
+1. Consume all relevant Kafka events
+2. Store immutable audit records in MongoDB
+3. Maintain complete event history
+
+**Kafka Events Consumed:**
+- `user.registered`
+- `user.logged_in`
+- `board.created`
+- `task.created`
+- `task.moved`
+- `task.updated`
+
+**Database Connection:**
+
+```env
+MONGODB_URI=mongodb://cascade-mongodb-0.cascade-mongodb-headless:27017,
+            cascade-mongodb-1.cascade-mongodb-headless:27017,
+            cascade-mongodb-2.cascade-mongodb-headless:27017/cascade-audit?replicaSet=rs0
+```
+
+**Audit Record Schema:**
+
+```javascript
+{
+  eventType: "task.moved",
+  eventData: {
+    taskId: "507f1f77bcf86cd799439012",
+    boardId: "507f1f77bcf86cd799439011",
+    oldColumnId: "col_todo",
+    newColumnId: "col_inprogress",
+    timestamp: "2025-01-07T10:40:00.000Z"
+  },
+  userId: "user_abc123",
+  timestamp: ISODate("2025-01-07T10:40:00.000Z")
+}
+```
+
+**Key Features:**
+- **Immutable:** Records are never updated or deleted
+- **Indexed:** Fast queries by eventType, userId, and timestamp
+- **Compliance:** Meets audit trail requirements for regulations
+- **Forensics:** Complete history for security investigations
+
+**Use Cases:**
+- Compliance auditing (SOC2, GDPR, etc.)
+- Security forensics and incident response
+- Historical data analysis
+- User activity tracking
+- Debugging complex issues
+
+### 9. API Docs Service
 
 **Port:** 3006  
 **Purpose:** Serve API documentation via Scalar
@@ -458,6 +555,8 @@ mongodb://
 | Auth Service | `cascade-auth` | User accounts, sessions |
 | Board Command | `cascade-board` | Boards, tasks (write) |
 | Board Query | `cascade-board` | Boards, tasks (read) |
+| Audit Service | `cascade-audit` | Immutable audit events |
+| Activity Service | None | Logs to stdout only |
 
 **Why the same database for Command and Query?**
 
@@ -596,22 +695,29 @@ MongoDB Replica Set (rs0)
 │   └── sessions (collection)
 │   └── accounts (collection)
 │
-└── cascade-board (database)
-    ├── boards (collection)
-    │   ├── _id
-    │   ├── name
-    │   ├── ownerId
-    │   ├── members []
-    │   ├── columns []
-    │   └── tags []
-    │
-    └── tasks (collection)
-        ├── _id
-        ├── boardId
-        ├── columnId
-        ├── title
-        ├── description
-        └── assignedTo
+├── cascade-board (database)
+│   ├── boards (collection)
+│   │   ├── _id
+│   │   ├── name
+│   │   ├── ownerId
+│   │   ├── members []
+│   │   ├── columns []
+│   │   └── tags []
+│   │
+│   └── tasks (collection)
+│       ├── _id
+│       ├── boardId
+│       ├── columnId
+│       ├── title
+│       ├── description
+│       └── assignedTo
+│
+└── cascade-audit (database)
+    └── auditevents (collection)
+        ├── eventType
+        ├── eventData
+        ├── userId
+        └── timestamp
 ```
 
 **Collections Explained:**
@@ -1234,6 +1340,8 @@ GKE Cluster (default namespace)
 ├── Auth Pods (1-5 replicas, HPA enabled)
 ├── Board Command Pods (1-5 replicas, HPA enabled)
 ├── Board Query Pods (1-5 replicas, HPA enabled)
+├── Activity Pod (1 replica, static)
+├── Audit Pod (1 replica, static)
 ├── API Docs Pod (1 replica, static)
 ├── MongoDB StatefulSet (3 replicas, cascade-mongodb-0/1/2)
 ├── Redis Deployment (1 replica)
@@ -1307,9 +1415,10 @@ auth:
 
 **Total Cluster Requirements (minimum):**
 
-- CPU: ~500m (0.5 cores)
-- Memory: ~640Mi
-- Plus MongoDB, Redis, Kafka overhead
+- CPU: ~600m (0.6 cores) - including Activity and Audit services
+- Memory: ~832Mi
+- Plus MongoDB, Redis, Kafka overhead (~500m CPU, ~1.5Gi RAM)
+- **Grand Total:** ~1.1 CPU cores, ~2.3Gi RAM minimum
 
 **Typical GKE Cluster:**
 
@@ -1561,9 +1670,9 @@ spec:
 
 1. **Single Redis instance:** No redundancy (becomes SPOF for caching)
 2. **Single Kafka broker:** Limited throughput and no fault tolerance
-3. **No Activity/Audit services in K8s:** Observability gap
-4. **No health checks:** Services lack liveness/readiness probes
-5. **No distributed tracing:** Hard to debug cross-service issues
+3. **No distributed tracing:** Hard to debug cross-service issues
+4. **Activity logs only to stdout:** Consider centralized logging solution
+5. **No audit query API:** Audit service stores data but doesn't expose query endpoints
 
 **Potential Improvements:**
 
@@ -1586,23 +1695,15 @@ spec:
        min.insync.replicas: 2
    ```
 
-3. **Deploy Activity & Audit Services:**
-   - Add Helm templates
-   - Enable full event logging
-   - Improve observability
+3. **Centralized Logging for Activity Service:**
+   - Deploy ELK Stack (Elasticsearch, Logstash, Kibana)
+   - Or use GCP Cloud Logging with better queries
+   - Add activity search and filtering
 
-4. **Add Health Probes:**
-
-   ```yaml
-   livenessProbe:
-     httpGet:
-       path: /health
-       port: 3001
-   readinessProbe:
-     httpGet:
-       path: /ready
-       port: 3001
-   ```
+4. **Audit Query API:**
+   - Add REST endpoints to Audit service
+   - Query audit logs by user, date range, event type
+   - Useful for compliance reporting
 
 5. **Implement Distributed Tracing:**
    - Add OpenTelemetry instrumentation
@@ -1615,6 +1716,8 @@ spec:
    // Add indexes for common queries
    BoardSchema.index({ "members.userId": 1 });
    TaskSchema.index({ boardId: 1, columnId: 1 });
+   AuditEventSchema.index({ userId: 1, timestamp: -1 });
+   AuditEventSchema.index({ eventType: 1, timestamp: -1 });
    ```
 
 7. **Rate Limiting:**
@@ -1624,7 +1727,7 @@ spec:
 8. **Monitoring & Alerts:**
    - Deploy Prometheus + Grafana
    - Set up alerts for high CPU, memory, error rates
-   - Monitor Kafka lag
+   - Monitor Kafka consumer lag for Activity and Audit services
 
 ---
 
@@ -1637,8 +1740,9 @@ Cascade's GKE architecture demonstrates a well-designed microservices system wit
 - **Services** discover each other via Kubernetes DNS
 - **Databases** are logically separated but physically shared for consistency
 - **Caching** optimizes read performance with event-driven invalidation
-- **Events** enable async operations and cache coherence
+- **Events** enable async operations, cache coherence, and observability
+- **Activity & Audit** services provide full event logging and compliance capabilities
 
 The system prioritizes **pragmatism over purity**, implementing CQRS without full database separation, which simplifies operations while still achieving the performance benefits of read/write splitting.
 
-**MongoDB replica set** ensures data is always in sync across all 3 nodes, and **Kafka events** keep the Redis cache fresh. The result is a scalable, resilient system that balances consistency, performance, and operational simplicity.
+**MongoDB replica set** ensures data is always in sync across all 3 nodes, and **Kafka events** keep the Redis cache fresh while powering Activity monitoring and Audit trail. The result is a scalable, resilient, and observable system that balances consistency, performance, operational simplicity, and compliance requirements.

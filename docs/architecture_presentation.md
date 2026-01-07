@@ -4,8 +4,6 @@
 
 This diagram illustrates the high-level architecture of Cascade running on Google Kubernetes Engine.
 
-**Note:** Activity and Audit services are defined in docker-compose for local development but are NOT currently deployed to the GKE cluster. The Kafka event streaming infrastructure is deployed but only utilized by Board Command and Board Query services.
-
 ```mermaid
 graph TB
     subgraph "External"
@@ -28,6 +26,8 @@ graph TB
             Auth[Auth Service]
             Cmd[Board Command Service]
             Query[Board Query Service]
+            Activity[Activity Service]
+            Audit[Audit Service]
             ApiDocs[API Docs Service]
         end
 
@@ -51,11 +51,15 @@ graph TB
     Gateway -->|"/api/tasks/**"| Cmd
 
     Cmd -->|Produce Events| Kafka
+    Auth -->|Produce Events| Kafka
     Kafka -->|Consume Events| Query
+    Kafka -->|Consume Events| Activity
+    Kafka -->|Consume Events| Audit
 
     Auth --> Mongo
     Cmd --> Mongo
     Query --> Mongo
+    Audit --> Mongo
     Query --> Redis
 ```
 

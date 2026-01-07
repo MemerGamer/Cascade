@@ -52,6 +52,8 @@ build_and_push() {
 build_and_push "auth-service" "backend/services/auth/Dockerfile" "."
 build_and_push "board-command-service" "backend/services/board-command/Dockerfile" "."
 build_and_push "board-query-service" "backend/services/board-query/Dockerfile" "."
+build_and_push "activity-service" "backend/services/activity/Dockerfile" "."
+build_and_push "audit-service" "backend/services/audit/Dockerfile" "."
 
 # Build Frontend (Context is frontend dir)
 build_and_push "frontend" "frontend/Dockerfile" "frontend"

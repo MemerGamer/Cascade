@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "cascade.fullname" . }}-audit
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: audit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "cascade.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: audit
+  template:
+    metadata:
+      labels:
+        {{- include "cascade.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: audit
+    spec:
+      containers:
+        - name: audit
+          image: "{{ .Values.app.image.repository }}/audit-service:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.app.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3005
+              protocol: TCP
+          env:
+            - name: PORT
+              value: "3005"
+            - name: LOG_LEVEL
+              value: "info"
+            - name: MONGODB_URI
+              value: "mongodb://{{ .Release.Name }}-mongodb-0.{{ .Release.Name }}-mongodb-headless:27017,{{ .Release.Name }}-mongodb-1.{{ .Release.Name }}-mongodb-headless:27017,{{ .Release.Name }}-mongodb-2.{{ .Release.Name }}-mongodb-headless:27017/cascade-audit?replicaSet=rs0"
+            - name: KAFKA_BROKERS
+              value: "cascade-kafka-kafka-bootstrap.default.svc.cluster.local:9092"
+            - name: NODE_ENV
+              value: "production"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "cascade.fullname" . }}-audit
+  labels:
+    {{- include "cascade.labels" . | nindent 4 }}
+    app.kubernetes.io/component: audit
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3005
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "cascade.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: audit

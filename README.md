@@ -37,9 +37,11 @@ Cascade implements a microservices architecture with the following core services
 1. **Auth Service** (`auth`) - User authentication using Better Auth with email/password and GitHub OAuth
 2. **Board Command Service** (`board-command`) - Write operations for boards and tasks
 3. **Board Query Service** (`board-query`) - Read operations with caching
-4. **Activity Service** (`activity`) - Real-time activity logging
-5. **Audit Service** (`audit`) - Immutable audit trail
+4. **Activity Service** (`activity`) - Real-time activity logging via Kafka events
+5. **Audit Service** (`audit`) - Immutable audit trail for compliance
 6. **API Docs Service** (`api-docs`) - Centralized API documentation
+
+All services are deployed to both local (Docker Compose) and production (GKE) environments.
 
 ### Microservices Patterns
 
@@ -170,6 +172,10 @@ API documentation is available via Scalar for each microservice when running:
   - Caching strategy and data flow
   - Event-driven architecture with Kafka
   - Complete deployment topology
+- **[Activity & Audit Services](./docs/ACTIVITY-AUDIT-SERVICES.md)** - Observability and compliance features
+  - Real-time activity monitoring
+  - Immutable audit trail
+  - Deployment and usage guide
 
 ## Scripts
 
