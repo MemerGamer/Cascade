@@ -1,0 +1,30 @@
+\chapter{Introduction}
+
+\section{Overview}
+Cascade is a modern, event-driven team task board application deployed on Google Kubernetes Engine (GKE). It leverages a microservices architecture to provide a scalable, resilient, and responsive user experience.
+
+The project demonstrates advanced cloud-native patterns including:
+\begin{itemize}
+    \item \textbf{CQRS (Command Query Responsibility Segregation)}: Separation of read and write operations for performance optimization.
+    \item \textbf{Event-Driven Architecture}: Asynchronous communication between services using Apache Kafka.
+    \item \textbf{Database per Service}: Logical separation of data to ensure service autonomy.
+    \item \textbf{API Gateway Pattern}: Centralized routing and handling of external traffic via Nginx.
+\end{itemize}
+
+\section{Key Features}
+\begin{itemize}
+    \item \textbf{Real-time Updates}: Changes are reflected instantly across all connected clients.
+    \item \textbf{Scalable Infrastructure}: Built on GKE with Horizontal Pod Autoscaling (HPA).
+    \item \textbf{Secure Authentication}: Supports Email/Password and GitHub OAuth.
+    \item \textbf{Audit Logging}: Immutable audit trails for compliance and security.
+    \item \textbf{Comprehensive Monitoring}: Activity logging and system health monitoring.
+\end{itemize}
+
+\section{Technology Stack}
+The application is built using a modern tech stack:
+\begin{itemize}
+    \item \textbf{Frontend}: React, Vite, TanStack Router, TailwindCSS
+    \item \textbf{Backend}: Node.js, Hono, TypeScript
+    \item \textbf{Infrastructure}: Kubernetes (GKE), Helm, Docker
+    \item \textbf{Data}: MongoDB (StatefulSet), Redis (Cache), Kafka (Strimzi Operator)
+\end{itemize}

@@ -1,0 +1,31 @@
+\chapter{API Reference}
+
+\section{Overview}
+The API is designed around RESTful principles. All API endpoints are prefixed with \texttt{/api}.
+
+\section{Authentication Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/auth/sign-up}: Register a new user.
+    \item \texttt{POST /api/auth/sign-in}: Log in an existing user.
+    \item \texttt{POST /api/auth/sign-out}: Log out.
+    \item \texttt{GET /api/auth/session}: Get current session.
+\end{itemize}
+
+\section{Board Endpoints}
+\begin{itemize}
+    \item \texttt{GET /api/boards}: List all boards for the current user.
+    \item \texttt{POST /api/boards}: Create a new board.
+    \item \texttt{GET /api/boards/:id}: Get details of a specific board.
+    \item \texttt{PUT /api/boards/:id}: Update a board.
+    \item \texttt{DELETE /api/boards/:id}: Delete a board.
+\end{itemize}
+
+\section{Task Endpoints}
+\begin{itemize}
+    \item \texttt{POST /api/tasks}: Create a new task.
+    \item \texttt{PUT /api/tasks/:id}: Update a task (move, edit).
+    \item \texttt{DELETE /api/tasks/:id}: Delete a task.
+\end{itemize}
+
+\section{Interactive Documentation}
+For interactive testing and detailed schema information, visit the API Docs service at \texttt{/reference} when the application is running.

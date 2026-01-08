@@ -1,0 +1,59 @@
+\chapter{Deployment}
+
+\section{Prerequisites}
+Before deploying Cascade, ensure you have the following tools installed:
+\begin{itemize}
+    \item Docker and Docker Compose
+    \item Google Cloud SDK (gcloud)
+    \item kubectl
+    \item Helm
+\end{itemize}
+
+\section{Local Development}
+For local development, Docker Compose is used to spin up the entire stack.
+\begin{lstlisting}[language=bash, caption=Start Local Environment]
+docker-compose up --build
+\end{lstlisting}
+This starts all microservices, MongoDB, Redis, and Kafka locally.
+
+\section{GKE Deployment}
+Deploying to Google Kubernetes Engine involves several steps, automated via Helm and shell scripts.
+
+\subsection{Setup Script}
+The \texttt{setup.sh} script automates the cluster creation and configuration.
+\begin{lstlisting}[language=bash, caption=Run Setup Script]
+./setup.sh <YOUR_PROJECT_ID>
+\end{lstlisting}
+
+\subsection{Helm Charts}
+The project uses a unified Helm chart located in \texttt{helm/cascade}.
+Key configuration files:
+\begin{itemize}
+    \item \texttt{values.yaml}: Default configuration values.
+    \item \texttt{templates/}: Kubernetes manifest templates.
+\end{itemize}
+
+\subsection{Manual Deployment Steps}
+If not using the setup script:
+\begin{enumerate}
+    \item \textbf{Create Cluster}: Create a GKE cluster with standard settings.
+    \item \textbf{Install Dependencies}: Install Nginx Ingress Controller and Cert Manager (if needed).
+    \item \textbf{Build Images}: Build and push Docker images to Google Artifact Registry.
+    \item \textbf{Deploy Helm Chart}:
+    \begin{lstlisting}[language=bash]
+    helm install cascade ./helm/cascade --set project.id=<PROJECT_ID>
+    \end{lstlisting}
+\end{enumerate}
+
+\section{Configuration}
+\subsection{Environment Variables}
+Services are configured via environment variables injected by Kubernetes.
+\begin{itemize}
+    \item \texttt{MONGODB\_URI}: Connection string for MongoDB.
+    \item \texttt{KAFKA\_BROKERS}: Address of Kafka bootstrap server.
+    \item \texttt{REDIS\_HOST}: Address of Redis instance.
+    \item \texttt{JWT\_SECRET}: Secret key for signing tokens.
+\end{itemize}
+
+\subsection{Secrets Management}
+Sensitive data like OAuth secrets and database credentials should be managed using Kubernetes Secrets, not plain text in \texttt{values.yaml}.

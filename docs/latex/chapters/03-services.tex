@@ -1,0 +1,66 @@
+\chapter{Services}
+
+\section{Auth Service}
+The Auth Service handles user authentication and session management.
+\begin{itemize}
+    \item \textbf{Port}: 3001
+    \item \textbf{Database}: \texttt{cascade-auth}
+    \item \textbf{Features}:
+    \begin{itemize}
+        \item Email/Password authentication via Better Auth.
+        \item GitHub OAuth integration.
+        \item JWT token generation and validation.
+    \end{itemize}
+\end{itemize}
+
+\section{Board Command Service}
+Responsible for all write operations to boards and tasks.
+\begin{itemize}
+    \item \textbf{Port}: 3002
+    \item \textbf{Database}: \texttt{cascade-board}
+    \item \textbf{Responsibilities}:
+    \begin{itemize}
+        \item Validating incoming requests (Zod schemas).
+        \item Persisting changes to MongoDB.
+        \item Publishing domain events to Kafka (e.g., \texttt{board.created}, \texttt{task.moved}).
+    \end{itemize}
+\end{itemize}
+
+\section{Board Query Service}
+Responsible for serving read requests with high performance.
+\begin{itemize}
+    \item \textbf{Port}: 3003
+    \item \textbf{Database}: \texttt{cascade-board}
+    \item \textbf{Cache}: Redis
+    \item \textbf{Responsibilities}:
+    \begin{itemize}
+        \item Serving GET requests for boards and tasks.
+        \item Managing Redis cache (Read-through/Write-through).
+        \item Consuming Kafka events to invalidate stale cache entries.
+    \end{itemize}
+\end{itemize}
+
+\section{Activity Service}
+Provides real-time visibility into system activities.
+\begin{itemize}
+    \item \textbf{Port}: 3004
+    \item \textbf{Input}: Kafka topics
+    \item \textbf{Function}: Consumes events and logs them for monitoring. It does not maintain its own database but streams activity data.
+\end{itemize}
+
+\section{Audit Service}
+Ensures compliance and security through immutable logging.
+\begin{itemize}
+    \item \textbf{Port}: 3005
+    \item \textbf{Database}: \texttt{cascade-audit}
+    \item \textbf{Function}: Consumes all domain events and stores them in an append-only collection.
+    \item \textbf{Schema}: Includes \texttt{eventType}, \texttt{eventData}, \texttt{userId}, and \texttt{timestamp}.
+\end{itemize}
+
+\section{API Docs Service}
+Hosts the interactive API documentation.
+\begin{itemize}
+    \item \textbf{Port}: 3006
+    \item \textbf{Tool}: Scalar
+    \item \textbf{Path}: \texttt{/reference}
+\end{itemize}
