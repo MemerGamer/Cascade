@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/component: board-command
 spec:
   replicas: {{ .Values.boardCommand.replicaCount }}
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       {{- include "cascade.selectorLabels" . | nindent 6 }}

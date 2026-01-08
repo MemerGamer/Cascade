@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/component: auth
 spec:
   replicas: {{ .Values.auth.replicaCount }}
+  revisionHistoryLimit: 3
   selector:
     matchLabels:
       {{- include "cascade.selectorLabels" . | nindent 6 }}
